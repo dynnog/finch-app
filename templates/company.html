@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Company Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Company Dashboard</h1>
+    <p>Connected provider: <strong>{{ provider }}</strong></p>
+
+    <div class="card">
+        <h2>Company Information</h2>
+        <div class="field">
+            <span class="label">Legal Name:</span>
+            <span class="value">{{ company.legal_name or 'Not available' }}</span>
+        </div>
+        <div class="field">
+            <span class="label">EIN:</span>
+            {% if company.ein %}
+                <span class="value">{{ company.ein }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Entity Type:</span>
+            <span class="value">{{ company.entity.type if company.entity else 'Not available' }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Entity Subtype:</span>
+            <span class="value">{{ company.entity.subtype if company.entity and company.entity.subtype else 'Not available' }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Primary Email:</span>
+            <span class="value">{{ company.primary_email or 'Not available' }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Primary Phone:</span>
+            <span class="value">{{ company.primary_phone_number or 'Not available' }}</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Locations</h2>
+        {% if company.locations %}
+            {% for loc in company.locations %}
+                <div class="field">
+                    <span class="value">
+                        {{ loc.line1 or '' }}
+                        {% if loc.line2 %}, {{ loc.line2 }}{% endif %}
+                        {% if loc.city %}, {{ loc.city }}{% endif %}
+                        {% if loc.state %}, {{ loc.state }}{% endif %}
+                        {% if loc.postal_code %} {{ loc.postal_code }}{% endif %}
+                        {% if loc.country %}, {{ loc.country }}{% endif %}
+                    </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <span class="null-value">Not available</span>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Employee Directory (<span id="employee-count">{{ employees|length }}</span> employees)</h2>
+        
+        <div class="filter-bar">
+            <input 
+                type="text" 
+                id="search-input"
+                placeholder="Search by name or department..." 
+                style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; flex: 1; min-width: 200px;"
+                onkeyup="filterEmployees()"
+            >
+            <select 
+                id="status-filter"
+                style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                onchange="filterEmployees()"
+            >
+                <option value="all">All Employees</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+            </select>
+        </div>
+    
+        <div id="employee-directory">
+            {% set departments = employees | map(attribute='department') | selectattr('name', 'defined') | map(attribute='name') | unique | list %}
+            {% for dept in departments | sort %}
+                <div class="dept-group" data-dept="{{ dept }}">
+                    <h3 style="color: #555; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                        {{ dept }}
+                    </h3>
+                    <ul class="employee-list" style="margin: 0;">
+                        {% for emp in employees %}
+                            {% if emp.department and emp.department.name == dept %}
+                                <li 
+                                    class="employee-item"
+                                    data-name="{{ emp.first_name }} {{ emp.last_name }}"
+                                    data-dept="{{ emp.department.name if emp.department else '' }}"
+                                    data-active="{{ 'active' if emp.is_active else 'inactive' }}"
+                                >
+                                    <a href="/employee/{{ emp.id }}">
+                                        {{ emp.first_name }} {{ emp.last_name }}
+                                    </a>
+                                    <span class="badge {{ 'active' if emp.is_active else 'inactive' }}">
+                                        {{ 'Active' if emp.is_active else 'Inactive' }}
+                                    </span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+    
+            {% set no_dept_employees = employees | selectattr('department', 'none') | list %}
+            {% if no_dept_employees %}
+                <div class="dept-group" data-dept="No Department">
+                    <h3 style="color: #555; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                        No Department
+                    </h3>
+                    <ul class="employee-list" style="margin: 0;">
+                        {% for emp in no_dept_employees %}
+                            <li
+                                class="employee-item"
+                                data-name="{{ emp.first_name }} {{ emp.last_name }}"
+                                data-dept=""
+                                data-active="{{ 'active' if emp.is_active else 'inactive' }}"
+                            >
+                                <a href="/employee/{{ emp.id }}">
+                                    {{ emp.first_name }} {{ emp.last_name }}
+                                </a>
+                                <span class="badge {{ 'active' if emp.is_active else 'inactive' }}">
+                                    {{ 'Active' if emp.is_active else 'Inactive' }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+    
+            <p id="no-results" style="display: none; color: #999; font-style: italic;">
+                No employees match your search.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+    function filterEmployees() {
+        const search = document.getElementById('search-input').value.toLowerCase();
+        const status = document.getElementById('status-filter').value;
+        const items = document.querySelectorAll('.employee-item');
+        let visibleCount = 0;
+    
+        items.forEach(item => {
+            const name = item.dataset.name.toLowerCase();
+            const dept = item.dataset.dept.toLowerCase();
+            const active = item.dataset.active;
+    
+            const matchesSearch = name.includes(search) || dept.includes(search);
+            const matchesStatus = status === 'all' || active === status;
+    
+            if (matchesSearch && matchesStatus) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    
+        // Hide empty department groups
+        document.querySelectorAll('.dept-group').forEach(group => {
+            const visibleItems = group.querySelectorAll('.employee-item:not([style*="display: none"])');
+            group.style.display = visibleItems.length === 0 ? 'none' : '';
+        });
+    
+        // Update count and no results message
+        document.getElementById('employee-count').textContent = visibleCount;
+        document.getElementById('no-results').style.display = visibleCount === 0 ? '' : 'none';
+    }
+    </script>
+</body>
+</html>

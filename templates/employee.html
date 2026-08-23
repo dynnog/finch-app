@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Details</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <a href="/dashboard" class="back-link">← Back to Directory</a>
+
+    <h1>{{ individual.first_name }} {{ individual.last_name }}</h1>
+
+    <div class="card">
+        <h2>Personal Information</h2>
+        {% if individual_error %}
+            <div class="error-message">{{ individual_error }}</div>
+        {% else %}
+        <div class="field">
+            <span class="label">Full Name:</span>
+            <span class="value">
+                {{ individual.first_name or 'Not available' }}
+                {{ individual.middle_name or '' }}
+                {{ individual.last_name or 'Not available' }}
+            </span>
+        </div>
+        <div class="field">
+            <span class="label">Preferred Name:</span>
+            {% if individual.preferred_name %}
+                <span class="value">{{ individual.preferred_name }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Date of Birth:</span>
+            {% if individual.dob %}
+                <span class="value">{{ individual.dob }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Gender:</span>
+            {% if individual.gender %}
+                <span class="value">{{ individual.gender | replace('_', ' ') | title }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Ethnicity:</span>
+            {% if individual.ethnicity %}
+                <span class="value">{{ individual.ethnicity | replace('_', ' ') | title }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Marital Status:</span>
+            {% if individual.marital_status %}
+                <span class="value">{{ individual.marital_status }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Contact Information</h2>
+        <div class="field">
+            <span class="label">Email Addresses:</span>
+            {% if individual.emails %}
+                {% for email in individual.emails %}
+                    <div>
+                        <span class="value">{{ email.data }}</span>
+                        <span style="color: #999; font-size: 12px;">({{ email.type }})</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Phone Numbers:</span>
+            {% if individual.phone_numbers %}
+                {% for phone in individual.phone_numbers %}
+                    <div>
+                        <span class="value">{{ phone.data }}</span>
+                        <span style="color: #999; font-size: 12px;">({{ phone.type }})</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Residence:</span>
+            {% if individual.residence %}
+                <span class="value">
+                    {{ individual.residence.line1 or '' }}
+                    {% if individual.residence.line2 %}, {{ individual.residence.line2 }}{% endif %}
+                    {% if individual.residence.city %}, {{ individual.residence.city }}{% endif %}
+                    {% if individual.residence.state %}, {{ individual.residence.state }}{% endif %}
+                    {% if individual.residence.postal_code %} {{ individual.residence.postal_code }}{% endif %}
+                    {% if individual.residence.country %}, {{ individual.residence.country }}{% endif %}
+                </span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Employment Information</h2>
+        {% if individual_error %}
+            <div class="error-message">{{ individual_error }}</div>
+        {% else %}
+        <div class="field">
+            <span class="label">Title:</span>
+            {% if employment.title %}
+                <span class="value">{{ employment.title }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Department:</span>
+            {% if employment.department and employment.department.name %}
+                <span class="value">{{ employment.department.name }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Employment Type:</span>
+            {% if employment.employment and employment.employment.type %}
+                <span class="value">{{ employment.employment.type | replace('_', ' ') | title }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Employment Subtype:</span>
+            {% if employment.employment and employment.employment.subtype %}
+                <span class="value">{{ employment.employment.subtype | replace('_', ' ') | title }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Employment Status:</span>
+            {% if employment.employment_status %}
+                <span class="value">{{ employment.employment_status }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">FLSA Status:</span>
+            {% if employment.flsa_status %}
+                <span class="value">{{ employment.flsa_status }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Start Date:</span>
+            {% if employment.start_date %}
+                <span class="value">{{ employment.start_date }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">End Date:</span>
+            {% if employment.end_date %}
+                <span class="value">{{ employment.end_date }}</span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Is Active:</span>
+            <span class="value">{{ 'Yes' if employment.is_active else 'No' }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Income:</span>
+            {% if employment.income and employment.income.amount %}
+                <span class="value">
+                    ${{ "{:,.2f}".format(employment.income.amount / 100) }}
+                    {{ employment.income.currency }}
+                    ({{ employment.income.unit }})
+                </span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Work Location:</span>
+            {% if employment.location %}
+                <span class="value">
+                    {{ employment.location.line1 or '' }}
+                    {% if employment.location.line2 %}, {{ employment.location.line2 }}{% endif %}
+                    {% if employment.location.city %}, {{ employment.location.city }}{% endif %}
+                    {% if employment.location.state %}, {{ employment.location.state }}{% endif %}
+                    {% if employment.location.postal_code %} {{ employment.location.postal_code }}{% endif %}
+                </span>
+            {% else %}
+                <span class="null-value">Not available</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
