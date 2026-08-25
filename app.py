@@ -54,7 +54,6 @@ def connect():
         auth=(CLIENT_ID, CLIENT_SECRET)
     )
     data = response.json()
-    print("Finch response:", data)
     if "connect_url" in data:
         return redirect(data["connect_url"])
     return f"Error creating session: {data}", 500
@@ -318,6 +317,6 @@ def download_report(report_id):
         as_attachment=True,
         download_name=f"employee_report_{report_id[:8]}.csv"
     )
-    
+
 if __name__ == "__main__":
     app.run(debug=True)
