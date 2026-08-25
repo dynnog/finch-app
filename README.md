@@ -133,17 +133,19 @@ testing multiple connections during development.
 
 ## Project Structure
 
+```
 finch-app/
-├── app.py # Flask application and route handlers
-├── requirements.txt # Python dependencies
-├── .env # Local credentials (not committed to Git)
-├── .gitignore # Excludes .env and venv from Git
+├── app.py              # Flask application and route handlers
+├── requirements.txt    # Python dependencies
+├── .env                # Local credentials (not committed to Git)
+├── .gitignore           # Excludes .env and venv from Git
 ├── static/
-│ └── style.css # Application styles
+│   └── style.css       # Application styles
 └── templates/
-├── index.html # Home page with connect button
-├── company.html # Company dashboard, employee directory, and AI assistant
-└── employee.html # Individual employee detail page
+    ├── index.html      # Home page with connect button
+    ├── company.html    # Company dashboard, employee directory, and AI assistant
+    └── employee.html   # Individual employee detail page
+```
 
 
 ## Given More Time
