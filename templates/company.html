@@ -6,8 +6,16 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Company Dashboard</h1>
-    <p>Connected provider: <strong>{{ provider }}</strong></p>
+    <div class="top-banner">
+        <div class="banner-content">
+            <span class="banner-logo">🌿 Finch Employment Explorer</span>
+            <a href="/disconnect" class="disconnect-link-banner">Disconnect</a>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <h1>{{ company.legal_name or 'Company Dashboard' }}</h1>
+        <p>Connected provider: <strong>{{ provider }}</strong></p>
 
     <div class="card">
         <h2>Company Information</h2>
@@ -61,6 +69,21 @@
         {% endif %}
     </div>
 
+    <div class="card chat-section">
+        <h2>✨ HR Data Assistant <span class="ai-badge">AI-Powered</span></h2>
+        <p class="chat-subtitle">Ask questions or filter the employee directory below using natural language, like "show me active employees in Sports."</p>
+        <div class="chat-messages-large" id="chat-messages"></div>
+        <div class="chat-input-bar">
+            <input 
+                type="text" 
+                id="chat-input" 
+                placeholder="Ask about employees or company data..."
+                onkeydown="if(event.key === 'Enter') sendMessage()"
+            >
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    
     <div class="card">
         <h2>Employee Directory (<span id="employee-count">{{ employees|length }}</span> employees)</h2>
         
@@ -69,12 +92,10 @@
                 type="text" 
                 id="search-input"
                 placeholder="Search by name or department..." 
-                style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; flex: 1; min-width: 200px;"
                 onkeyup="filterEmployees()"
             >
             <select 
                 id="status-filter"
-                style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
                 onchange="filterEmployees()"
             >
                 <option value="all">All Employees</option>
@@ -87,10 +108,10 @@
             {% set departments = employees | map(attribute='department') | selectattr('name', 'defined') | map(attribute='name') | unique | list %}
             {% for dept in departments | sort %}
                 <div class="dept-group" data-dept="{{ dept }}">
-                    <h3 style="color: #555; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                    <h3>
                         {{ dept }}
                     </h3>
-                    <ul class="employee-list" style="margin: 0;">
+                    <ul class="employee-list">
                         {% for emp in employees %}
                             {% if emp.department and emp.department.name == dept %}
                                 <li 
@@ -115,10 +136,10 @@
             {% set no_dept_employees = employees | selectattr('department', 'none') | list %}
             {% if no_dept_employees %}
                 <div class="dept-group" data-dept="No Department">
-                    <h3 style="color: #555; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                    <h3>
                         No Department
                     </h3>
-                    <ul class="employee-list" style="margin: 0;">
+                    <ul class="employee-list">
                         {% for emp in no_dept_employees %}
                             <li
                                 class="employee-item"
@@ -138,7 +159,7 @@
                 </div>
             {% endif %}
     
-            <p id="no-results" style="display: none; color: #999; font-style: italic;">
+            <p id="no-results" class="hidden">
                 No employees match your search.
             </p>
         </div>
@@ -175,8 +196,64 @@
     
         // Update count and no results message
         document.getElementById('employee-count').textContent = visibleCount;
-        document.getElementById('no-results').style.display = visibleCount === 0 ? '' : 'none';
+        const noResultsEl = document.getElementById('no-results');
+        if (visibleCount === 0) {
+            noResultsEl.classList.remove('hidden');
+        } else {
+            noResultsEl.classList.add('hidden');
+        }
     }
-    </script>
+
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const messages = document.getElementById('chat-messages');
+        const message = input.value.trim();
+        if (!message) return;
+
+        messages.innerHTML += `<div class="chat-message user">${message}</div>`;
+        input.value = '';
+        messages.scrollTop = messages.scrollHeight;
+
+        const loadingId = 'loading-' + Date.now();
+        messages.innerHTML += `<div class="chat-message assistant" id="${loadingId}">Thinking...</div>`;
+        messages.scrollTop = messages.scrollHeight;
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            const data = await response.json();
+            const loadingEl = document.getElementById(loadingId);
+            loadingEl.textContent = data.response || data.error;
+
+            if (data.filter) {
+                applyAIFilter(data.filter);
+            }
+
+            if (data.report_id) {
+                const link = document.createElement('a');
+                link.href = `/download-report/${data.report_id}`;
+                link.textContent = '📥 Download CSV Report';
+                link.className = 'report-download-link';
+                loadingEl.appendChild(document.createElement('br'));
+                loadingEl.appendChild(link);
+            }
+        } catch (error) {
+            document.getElementById(loadingId).textContent = 'Something went wrong. Please try again.';
+        }
+
+        messages.scrollTop = messages.scrollHeight;
+        }
+
+    function applyAIFilter(filter) {
+        document.getElementById('search-input').value = filter.search_term || '';
+        document.getElementById('status-filter').value = filter.status || 'all';
+        filterEmployees();
+    }
+
+</script>
+</div>
 </body>
 </html>
